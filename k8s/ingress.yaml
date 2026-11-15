@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kb-app
+  namespace: knowledge-assistant
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+spec:
+  ingressClassName: nginx
+  rules:
+
+    - host: kb.127.0.0.1.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kb-app
+                port:
+                  number: 80

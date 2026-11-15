@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kb-config
+  namespace: knowledge-assistant
+data:
+  APP_ENV: "kubernetes"
+  LOG_LEVEL: "INFO"
+  LOG_JSON: "true"
+
+
+  GEMINI_MODEL: "gemini-3.5-flash"
+  GEMINI_EMBED_MODEL: "gemini-embedding-2"
+  EMBED_DIM: "768"
+
+  CHUNK_SIZE: "1200"
+  CHUNK_OVERLAP: "200"
+  TOP_K: "4"
+  EMBED_CONCURRENCY: "8"
+  EMBED_RPM: "90"
+  MAX_OUTPUT_TOKENS: "2048"
+  THINKING_BUDGET: "0"
+  REQUEST_TIMEOUT: "120"
+  MAX_UPLOAD_MB: "20"
+
+  CHROMA_COLLECTION: "documents"
+  CHROMA_DIR: "/app/data/chroma"
+  UPLOAD_DIR: "/app/data/uploads"
