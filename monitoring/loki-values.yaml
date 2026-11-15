@@ -1,0 +1,25 @@
+loki:
+  enabled: true
+  isDefault: false
+  persistence:
+    enabled: false 
+
+promtail:
+  enabled: true
+  config:
+    snippets:
+      pipelineStages:
+        - cri: {}
+        - json:
+            expressions:
+              level: level
+              logger: logger
+              request_id: request_id
+        - labels:
+            level:
+
+grafana:
+  enabled: false 
+
+prometheus:
+  enabled: false
