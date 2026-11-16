@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 set -euo pipefail
 
 BASE="${1:-http://localhost:8000}"
@@ -16,6 +18,7 @@ echo "Sending ${REQUESTS} requests to ${BASE}"
 for i in $(seq 1 "$REQUESTS"); do
   curl -s -o /dev/null "$BASE/healthz"
   curl -s -o /dev/null "$BASE/api/documents"
+
   if (( i % 5 == 0 )); then
     q="${QUESTIONS[$((RANDOM % ${#QUESTIONS[@]}))]}"
     curl -s -o /dev/null -X POST "$BASE/api/ask" \

@@ -1,8 +1,9 @@
+#!/usr/bin/env bash
+
 set -uo pipefail
 
 KEYS='^(GEMINI|EMBED|CHUNK|TOP_K|THINKING|MAX_|REQUEST|LOG_|APP_|CHROMA|UPLOAD)'
 mask() { sed 's/\(GEMINI_API_KEY=.\{6\}\).*/\1.../'; }
-
 
 if curl -sf --max-time 2 http://localhost:8000/api/info >/dev/null 2>&1; then
   echo "Source: local app on http://localhost:8000"

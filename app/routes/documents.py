@@ -24,14 +24,11 @@ async def upload(file: UploadFile = File(...)):
         raise HTTPException(400, "That file is empty.")
 
     if len(body) > cfg.max_upload_bytes:
-        raise HTTPException(
-            413, f"File is larger than the {cfg.max_upload_mb} MB limit."
-        )
+        raise HTTPException(413, f"File is larger than the {cfg.max_upload_mb} MB limit.")
 
     try:
         result = pipeline.ingest(body, file.filename)
     except ValueError as exc:
-    
         raise HTTPException(400, str(exc)) from exc
     except Exception as exc:
         ERRORS.labels(stage="ingest").inc()

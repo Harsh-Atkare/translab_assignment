@@ -2,7 +2,6 @@ grafana:
   adminPassword: admin
   service:
     type: NodePort
- 
   sidecar:
     dashboards:
       enabled: true
@@ -17,7 +16,6 @@ grafana:
 prometheus:
   prometheusSpec:
     retention: 6h
-
     serviceMonitorSelectorNilUsesHelmValues: false
     resources:
       requests:
@@ -26,6 +24,7 @@ prometheus:
 
 alertmanager:
   enabled: false
+
 nodeExporter:
   enabled: false
 

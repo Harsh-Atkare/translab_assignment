@@ -15,12 +15,20 @@ def test_readiness_reports_checks(client):
 
 def test_metrics_exposes_our_custom_series(client):
     body = client.get("/metrics").text
+
     assert "kb_query_duration_seconds" in body
     assert "kb_ingest_duration_seconds" in body
     assert "http_requests_total" in body
 
 
 def test_index_page_served(client):
+    """The root serves the React build, or explains why it can't.
+
+    `make test` on a fresh clone runs before `make ui`, so there is no
+    frontend/dist yet. Both outcomes are correct behaviour - what matters is
+    that the unbuilt case fails with a useful message rather than a 500 or a
+    blank page.
+    """
     from app.main import ui_dir
 
     r = client.get("/")
@@ -34,12 +42,14 @@ def test_index_page_served(client):
 
 
 def test_api_works_without_a_frontend_build(client):
+    """A missing UI build must not take the API down with it."""
     assert client.get("/healthz").status_code == 200
     assert client.get("/api/documents").status_code == 200
     assert client.get("/docs").status_code == 200
 
 
 def test_info_exposes_the_settings_worth_checking(client):
+    """/api/info is the config inspector - these are the ones people check."""
     body = client.get("/api/info").json()
 
     for key in (
@@ -54,6 +64,7 @@ def test_info_exposes_the_settings_worth_checking(client):
 
 
 def test_info_never_leaks_the_api_key(client):
+    """Anyone who can reach the app can reach this endpoint."""
     body = client.get("/api/info").json()
 
     assert body["api_key_set"] is True

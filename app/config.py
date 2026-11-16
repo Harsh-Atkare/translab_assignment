@@ -7,12 +7,20 @@ load_dotenv(override=False)
 
 
 class Settings:
+    """Everything configurable lives here so nothing is hardcoded in the app.
+
+    Model names are env vars on purpose - Google renames Gemini models fairly
+    often, and I don't want a redeploy to be a code change. Run
+    `python scripts/list_models.py` to see what your key actually has access to.
+    """
+
     def __init__(self) -> None:
         self.gemini_api_key = os.getenv("GEMINI_API_KEY", "")
 
         self.chat_model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
 
         self.max_output_tokens = int(os.getenv("MAX_OUTPUT_TOKENS", "2048"))
+
         self.request_timeout = int(os.getenv("REQUEST_TIMEOUT", "120"))
 
         budget = os.getenv("THINKING_BUDGET", "0").strip().lower()

@@ -69,8 +69,7 @@ def ask(question: str, doc_id: str | None = None) -> dict:
     if not hits or hits[0]["score"] < 0.25:
         return {
             "answer": (
-                "I could not find anything relevant in the uploaded documents "
-                "for that question."
+                "I could not find anything relevant in the uploaded documents for that question."
             ),
             "sources": [],
             "seconds": round(time.perf_counter() - started, 2),

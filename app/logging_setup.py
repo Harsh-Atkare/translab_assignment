@@ -9,6 +9,11 @@ request_id_ctx: ContextVar[str] = ContextVar("request_id", default="-")
 
 
 class JsonFormatter(logging.Formatter):
+    """One JSON object per line.
+
+    Loki/Promtail picks these up straight out of stdout, which is why we never
+    write log files inside the container.
+    """
 
     def format(self, record: logging.LogRecord) -> str:
         payload = {

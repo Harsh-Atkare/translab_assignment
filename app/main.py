@@ -27,7 +27,6 @@ async def lifespan(_: FastAPI):
     )
 
     if not cfg.gemini_api_key:
-
         log.warning("GEMINI_API_KEY is not set; uploads and questions will fail")
 
     yield
@@ -44,7 +43,11 @@ app = FastAPI(
 
 @app.middleware("http")
 async def request_context(request: Request, call_next):
+    """Tag every log line in a request with the same id.
 
+    Makes life much easier in Grafana - you filter on one request_id and see
+    the whole chain instead of guessing which log lines belong together.
+    """
     rid = request.headers.get("X-Request-ID") or new_request_id()
     token = request_id_ctx.set(rid)
 
@@ -56,18 +59,24 @@ async def request_context(request: Request, call_next):
         request_id_ctx.reset(token)
 
 
-Instrumentator(excluded_handlers=["/metrics", "/healthz", "/readyz"]).instrument(
-    app
-).expose(app, endpoint="/metrics", include_in_schema=False)
+Instrumentator(excluded_handlers=["/metrics", "/healthz", "/readyz"]).instrument(app).expose(
+    app, endpoint="/metrics", include_in_schema=False
+)
 
 app.include_router(health.router)
 app.include_router(documents.router)
 app.include_router(chat.router)
 
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
 def ui_dir() -> Path | None:
+    """Where the built frontend lives, or None if it hasn't been built.
+
+    Resolved on each call rather than cached at import, so running `make ui`
+    against an already-running server works without a restart.
+    """
     for candidate in (ROOT / "frontend_dist", ROOT / "frontend" / "dist"):
         if (candidate / "index.html").is_file():
             return candidate
@@ -79,7 +88,6 @@ _ui = ui_dir()
 if _ui:
     app.mount("/assets", StaticFiles(directory=_ui / "assets"), name="assets")
 else:
-
     log.warning("no frontend build found - run `make ui` (the API still works)")
 
 
@@ -91,8 +99,7 @@ def index():
         return JSONResponse(
             status_code=503,
             content={
-                "detail": "Frontend not built. Run `make ui`, or use the API "
-                "directly at /docs."
+                "detail": "Frontend not built. Run `make ui`, or use the API directly at /docs."
             },
         )
 

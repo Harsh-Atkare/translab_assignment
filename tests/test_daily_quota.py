@@ -1,3 +1,18 @@
+"""Per-day quota exhaustion is a different failure from per-minute throttling.
+
+Seen in the wild:
+
+    429 RESOURCE_EXHAUSTED ... 'Quota exceeded for metric:
+    generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash,
+    description: Generate content requests per day limit exceeded on Free
+    Tier' ... 'retryDelay': '80462s'
+
+Twenty requests per day, per project, per model. Retrying is useless - the
+reset is 22 hours away - so this must fail immediately with a message that
+says when it resets and that switching GEMINI_MODEL gives a fresh
+allowance.
+"""
+
 import pytest
 
 import app.config as config
@@ -65,7 +80,6 @@ def test_daily_quota_is_distinguished_from_per_minute():
     assert gemini._is_daily_quota(RuntimeError(DAILY_QUOTA))
     assert not gemini._is_daily_quota(RuntimeError(PER_MINUTE))
 
-    # both are still 429s
     assert gemini._is_throttled(RuntimeError(DAILY_QUOTA))
     assert gemini._is_throttled(RuntimeError(PER_MINUTE))
 
@@ -91,9 +105,7 @@ def test_daily_quota_fails_once(monkeypatch):
 
 def test_per_minute_throttle_also_fails_immediately(monkeypatch):
     """Both kinds of 429 fail fast now; only the message differs."""
-    calls = _install(
-        monkeypatch, lambda model, n: (_ for _ in ()).throw(RuntimeError(PER_MINUTE))
-    )
+    calls = _install(monkeypatch, lambda model, n: (_ for _ in ()).throw(RuntimeError(PER_MINUTE)))
 
     with pytest.raises(RuntimeError):
         gemini.answer("q?", PASSAGES)

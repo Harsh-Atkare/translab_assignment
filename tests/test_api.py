@@ -19,17 +19,13 @@ def test_upload_then_list_then_delete(client, sample_pdf):
 
 
 def test_non_pdf_is_rejected(client):
-    r = client.post(
-        "/api/documents", files={"file": ("notes.txt", b"hello", "text/plain")}
-    )
+    r = client.post("/api/documents", files={"file": ("notes.txt", b"hello", "text/plain")})
     assert r.status_code == 400
     assert "PDF" in r.json()["detail"]
 
 
 def test_empty_file_is_rejected(client):
-    r = client.post(
-        "/api/documents", files={"file": ("empty.pdf", b"", "application/pdf")}
-    )
+    r = client.post("/api/documents", files={"file": ("empty.pdf", b"", "application/pdf")})
     assert r.status_code == 400
 
 
@@ -54,7 +50,7 @@ def test_ask_returns_answer_and_sources(client, sample_pdf):
 
 def test_question_must_be_long_enough(client):
     r = client.post("/api/ask", json={"question": "hi"})
-    assert r.status_code == 422 
+    assert r.status_code == 422
 
 
 def test_info_endpoint_reports_config(client):

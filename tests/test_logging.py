@@ -5,7 +5,11 @@ from app.logging_setup import JsonFormatter, request_id_ctx, setup_logging
 
 
 def test_third_party_noise_is_suppressed():
+    """These log one line per request at INFO and bury our own output.
 
+    google_genai in particular announces automatic function calling before
+    every generate_content, and we never pass tools.
+    """
     setup_logging("INFO", as_json=False)
 
     for name in ("httpx", "httpcore", "chromadb", "google_genai"):
@@ -43,4 +47,4 @@ def test_json_formatter_shape():
     assert payload["msg"] == "indexed file.pdf"
     assert payload["request_id"] == "abc123"
     assert payload["level"] == "INFO"
-    assert payload["chunks"] == 12 
+    assert payload["chunks"] == 12

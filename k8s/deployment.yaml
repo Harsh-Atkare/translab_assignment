@@ -24,7 +24,7 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
-        fsGroup: 10001 
+        fsGroup: 10001        # so the mounted PVC is writable by appuser
 
       containers:
         - name: app
@@ -47,6 +47,7 @@ spec:
               memory: 256Mi
             limits:
               memory: 1Gi
+
           startupProbe:
             httpGet:
               path: /healthz
@@ -70,7 +71,7 @@ spec:
 
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false 
+            readOnlyRootFilesystem: false   # Chroma writes to /app/data
             capabilities:
               drop: ["ALL"]
 

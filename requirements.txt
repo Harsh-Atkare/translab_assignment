@@ -1,3 +1,6 @@
+# Pinned so a build today and a build in six months produce the same image.
+# Bump deliberately, not by accident: `pip install -U <pkg>` then re-pin.
+
 fastapi==0.163.0
 uvicorn[standard]==0.54.0
 python-multipart==0.0.33

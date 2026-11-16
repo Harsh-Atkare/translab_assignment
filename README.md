@@ -171,11 +171,13 @@ Full stack with Prometheus and Grafana:
 
 ```bash
 make doctor   # checks Docker, .env, ports and versions first
-make up
+make up       # builds and starts app, Prometheus and Grafana
+docker ps     # three containers; kb-app reports (healthy) after ~20s
 ```
 
-Note that `make run` and `make up` both want port 8000, so stop one before
-starting the other.
+`make run` and `make up` both bind port 8000, so stop one before starting
+the other. `make doctor` catches that, and ignores the case where the port
+is held by this stack's own container.
 
 | Service | URL | Credentials |
 |---|---|---|
@@ -278,12 +280,19 @@ helm install loki grafana/loki-stack \
 kubectl apply -f k8s/servicemonitor.yaml
 ```
 
-Load the dashboard into Grafana:
+Load the dashboard. In the cluster Grafana's sidecar reads dashboards from
+ConfigMaps labelled `grafana_dashboard`, so it ships with the deployment
+rather than being imported by hand:
+
+```bash
+make k8s-dashboard
+```
+
+Then:
 
 ```bash
 kubectl -n monitoring port-forward svc/monitoring-grafana 3000:80
-# Grafana → Dashboards → Import → upload
-# monitoring/dashboards/knowledge-assistant.json
+# admin / admin - Dashboards → Knowledge Assistant
 ```
 
 ### What's on the dashboard
@@ -562,7 +571,7 @@ is a different thing. Here is the split.
 | **No authentication** | Anyone who reaches the service can upload and query | OIDC or an API gateway in front; per-tenant document isolation |
 | **Single replica** | No HA; a node drain is an outage | Chroma in server mode or a managed vector DB, then scale out |
 | **No TLS on the ingress** | Traffic is plaintext | cert-manager with Let's Encrypt, or terminate at the load balancer |
-| **No image scanning** | Vulnerable base layers ship unnoticed | Trivy or Grype in CI, failing on HIGH |
+| **No image scanning** | Vulnerable base layers ship unnoticed. `python:3.12-slim` currently carries a handful of Debian CVEs — normal for any base, but nothing here tracks them | Trivy or Grype in CI failing on HIGH, a pinned base digest, and a scheduled rebuild so patches land |
 | **No backup of the index** | A lost PVC means re-uploading everything | Scheduled volume snapshots, or treat the index as rebuildable and keep the source PDFs |
 | **Secrets are plain Kubernetes Secrets** | Base64, not encryption | External Secrets Operator or a cloud secret manager |
 | **Free-tier model quota** | 429s and 503s under any real load | A paid key, and a queue in front of ingestion |
@@ -645,7 +654,7 @@ tests/                    64 tests, Gemini stubbed throughout
   test_generation_logging.py  Logging before and after the model call
 k8s/                      Kubernetes manifests
 monitoring/               Prometheus, Grafana and Loki config + dashboard JSON
-scripts/                  list_models, env-check, doctor, load generator, scaffold
+scripts/                  list_models, env-check, doctor, load generator
 .github/workflows/        CI/CD pipeline
 ```
 

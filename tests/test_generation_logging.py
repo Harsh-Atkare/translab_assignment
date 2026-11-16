@@ -1,3 +1,9 @@
+"""Generation must be visible in the logs while it is still running.
+
+Only logging after the call meant a slow or stuck request looked identical
+to an idle app.
+"""
+
 import pytest
 
 from app.rag import gemini
@@ -46,6 +52,11 @@ def test_missing_key_raises_clearly(monkeypatch):
 
 
 def test_client_is_built_with_a_timeout(monkeypatch):
+    """Regression: the SDK has no default timeout.
+
+    Without this the app hangs indefinitely on a stalled call, and because
+    the only log line comes after the call, the logs show nothing at all.
+    """
     import app.config as config
 
     captured = {}

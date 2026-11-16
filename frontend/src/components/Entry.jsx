@@ -42,6 +42,7 @@ function Timings({ seconds, timings }) {
 export default function Entry({ entry, index, total }) {
   const { question, answer, sources, seconds, timings, error, pending } = entry;
 
+
   const animate = index === 0 && !error;
   const { shown, done } = useTypewriter(answer || '', { enabled: animate });
 

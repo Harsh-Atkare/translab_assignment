@@ -44,7 +44,7 @@ def test_scanned_pdf_raises_a_useful_error():
     import pymupdf
 
     doc = pymupdf.open()
-    doc.new_page() 
+    doc.new_page()
     data = doc.tobytes()
     doc.close()
 

@@ -2,7 +2,7 @@ loki:
   enabled: true
   isDefault: false
   persistence:
-    enabled: false 
+    enabled: false        # fine for a demo cluster; use a PVC for anything real
 
 promtail:
   enabled: true
@@ -19,7 +19,7 @@ promtail:
             level:
 
 grafana:
-  enabled: false 
+  enabled: false          # kube-prometheus-stack already ships Grafana
 
 prometheus:
   enabled: false

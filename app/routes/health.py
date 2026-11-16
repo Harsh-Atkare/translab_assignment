@@ -43,6 +43,7 @@ def readiness():
 @router.get("/api/info")
 def info():
     cfg = get_settings()
+
     return {
         "env": cfg.app_env,
         "chat_model": cfg.chat_model,

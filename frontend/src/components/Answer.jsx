@@ -2,7 +2,10 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+
 const CITATION = /(\[pages?\s+[\d,\s-]+\])/gi;
+
+
 function decorate(children) {
   return Array.isArray(children)
     ? children.map((child, i) => decorateOne(child, i))
@@ -54,6 +57,8 @@ const components = {
   strong: ({ children }) => <strong>{decorate(children)}</strong>,
   em: ({ children }) => <em>{decorate(children)}</em>,
   td: ({ children }) => <td>{decorate(children)}</td>,
+
+
   code: ({ inline, children, ...rest }) =>
     inline ? <code {...rest}>{children}</code> : <CodeBlock>{children}</CodeBlock>,
 
@@ -63,6 +68,7 @@ const components = {
     <a href={href} target="_blank" rel="noreferrer noopener">{children}</a>
   ),
 };
+
 
 function balanceFences(text) {
   const fences = (text.match(/```/g) || []).length;

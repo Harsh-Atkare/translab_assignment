@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 
+
 export function useTheme() {
   const [theme, setTheme] = useState(() => {
     try {
       return localStorage.getItem('kb-theme') || 'light';
     } catch {
+
       return 'light';
     }
   });
@@ -14,12 +16,13 @@ export function useTheme() {
     try {
       localStorage.setItem('kb-theme', theme);
     } catch {
- 
+
     }
   }, [theme]);
 
   return [theme, () => setTheme((t) => (t === 'light' ? 'dark' : 'light'))];
 }
+
 
 export function useTypewriter(text, { enabled = true, charsPerTick = 3, tickMs = 16 } = {}) {
   const [shown, setShown] = useState(enabled ? '' : text);
@@ -45,6 +48,7 @@ export function useTypewriter(text, { enabled = true, charsPerTick = 3, tickMs =
 
   return { shown, done };
 }
+
 
 export function useElapsed(active) {
   const [seconds, setSeconds] = useState(0);

@@ -1,3 +1,10 @@
+"""Regression tests for config loading.
+
+The first version of this app read os.getenv directly and never called
+load_dotenv, so `make run` ignored .env entirely and every upload failed with
+"GEMINI_API_KEY is not set". These pin the behaviour down.
+"""
+
 import subprocess
 import sys
 import textwrap
@@ -35,7 +42,7 @@ def test_dotenv_is_read_on_import(tmp_path, monkeypatch):
 
 
 def test_real_env_var_beats_dotenv(tmp_path):
-
+    """Docker and Kubernetes pass real env vars - those must win."""
     (tmp_path / ".env").write_text("GEMINI_API_KEY=from-dotenv\n")
 
     import os

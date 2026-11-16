@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+
 export default function Toast({ message, onClose, timeout = 8000 }) {
   useEffect(() => {
     if (!message) return;
@@ -7,7 +8,7 @@ export default function Toast({ message, onClose, timeout = 8000 }) {
     return () => clearTimeout(timer);
   }, [message, onClose, timeout]);
 
-  // Escape closes it, like any other dismissible overlay.
+
   useEffect(() => {
     if (!message) return;
     const onKey = (e) => e.key === 'Escape' && onClose();

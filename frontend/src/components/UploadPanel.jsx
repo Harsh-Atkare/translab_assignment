@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { uploadDocument } from '../api.js';
 import { useElapsed } from '../hooks.js';
 
+
 const STAGES = [
   { label: 'Extracting text', after: 0 },
   { label: 'Splitting into chunks', after: 2 },
@@ -44,7 +45,7 @@ export default function UploadPanel({ onIndexed, onError }) {
       onError?.(err.message);
     } finally {
       setBusy(false);
-      if (inputRef.current) inputRef.current.value = ''; // allow re-upload
+      if (inputRef.current) inputRef.current.value = '';
     }
   }
 

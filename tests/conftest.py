@@ -10,6 +10,11 @@ os.environ["LOG_JSON"] = "false"
 
 
 def _fake_vector(text: str) -> list[float]:
+    """Deterministic pseudo-embedding.
+
+    We are testing plumbing, not retrieval quality - so a hash is fine and it
+    means the test suite never calls Gemini or needs a real key.
+    """
     digest = hashlib.sha256(text.encode()).digest()
     return [(b - 128) / 128 for b in (digest * 24)[:768]]
 

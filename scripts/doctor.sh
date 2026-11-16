@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 set -uo pipefail
 
 ok=0
@@ -31,8 +33,18 @@ fi
 echo
 echo "Ports"
 
+running=$(docker compose ps --status running --services 2>/dev/null || true)
+
 for port in 8000 9090 3000; do
-  if lsof -ti:"$port" >/dev/null 2>&1; then
+  case "$port" in
+    8000) svc=app ;;
+    9090) svc=prometheus ;;
+    3000) svc=grafana ;;
+  esac
+
+  if grep -qx "$svc" <<<"$running" 2>/dev/null; then
+    pass "port $port - our own '$svc' container"
+  elif lsof -ti:"$port" >/dev/null 2>&1; then
     owner=$(lsof -ti:"$port" | head -1 | xargs ps -p 2>/dev/null | tail -1 | awk '{for(i=4;i<=NF;i++) printf "%s ", $i}')
     warn "port $port is in use${owner:+ by:$owner}" "lsof -ti:$port | xargs kill   (or stop 'make run' first)"
   else

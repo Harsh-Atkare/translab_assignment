@@ -14,16 +14,13 @@ log = logging.getLogger(__name__)
 
 _client: genai.Client | None = None
 
-# Free tier is rate limited per minute, so batch embeddings rather than firing
-# one request per chunk. 50 is comfortably under the payload limit.
 
-# no. of max chunks
 EMBED_BATCH = 50
+
 
 SLOW_GENERATION_SECONDS = 15
 
 
-# per-minute rate limit
 DAILY_QUOTA_THRESHOLD = 300
 
 
@@ -74,6 +71,7 @@ def limiter() -> RateLimiter:
                 _limiter = RateLimiter(get_settings().embed_rpm)
 
     return _limiter
+
 
 SYSTEM_PROMPT = """You are a document assistant for an internal knowledge base.
 
@@ -128,7 +126,6 @@ def embed(texts: list[str], is_query: bool = False) -> list[list[float]]:
         if _batching_works:
             got = _embed_call(batch, task, cfg)
 
-
             if len(got) == len(batch):
                 vectors.extend(got)
                 continue
@@ -145,10 +142,7 @@ def embed(texts: list[str], is_query: bool = False) -> list[list[float]]:
         vectors.extend(_embed_one_by_one(batch, task, cfg))
 
     if len(vectors) != len(texts):
-
-        raise RuntimeError(
-            f"Embedding returned {len(vectors)} vectors for {len(texts)} inputs."
-        )
+        raise RuntimeError(f"Embedding returned {len(vectors)} vectors for {len(texts)} inputs.")
 
     return vectors
 
@@ -181,8 +175,6 @@ def _embed_one_by_one(batch: list[str], task: str, cfg) -> list[list[float]]:
         return _embed_call([text], task, cfg)
 
     with ThreadPoolExecutor(max_workers=cfg.embed_concurrency) as pool:
-        # executor.map preserves input order, which matters - these vectors
-        # are zipped back against their chunks by position.
         results = list(pool.map(one, batch))
 
     out = [vec for result in results for vec in result]
@@ -199,9 +191,7 @@ def _embed_one_by_one(batch: list[str], task: str, cfg) -> list[list[float]]:
 def answer(question: str, passages: list[dict]) -> str:
     cfg = get_settings()
 
-    context = "\n\n---\n\n".join(
-        f"[page {p['page']}]\n{p['text']}" for p in passages
-    )
+    context = "\n\n---\n\n".join(f"[page {p['page']}]\n{p['text']}" for p in passages)
     prompt = f"{SYSTEM_PROMPT}\n\nCONTEXT:\n{context}\n\nQUESTION: {question}"
 
     log.info(
@@ -256,29 +246,22 @@ def _generate(prompt: str, cfg, model: str):
     default and the output budget is generous.
     """
     config = types.GenerateContentConfig(
-        temperature=0.2,  
+        temperature=0.2,
         max_output_tokens=cfg.max_output_tokens,
     )
 
     if cfg.thinking_budget is not None:
-        config.thinking_config = types.ThinkingConfig(
-            thinking_budget=cfg.thinking_budget
-        )
+        config.thinking_config = types.ThinkingConfig(thinking_budget=cfg.thinking_budget)
 
     try:
-        return client().models.generate_content(
-            model=model, contents=prompt, config=config
-        )
+        return client().models.generate_content(model=model, contents=prompt, config=config)
     except Exception as exc:
-
         if cfg.thinking_budget is None or "thinking" not in str(exc).lower():
             raise
 
         log.warning("%s rejected thinking_config, retrying without", model)
         config.thinking_config = None
-        return client().models.generate_content(
-            model=model, contents=prompt, config=config
-        )
+        return client().models.generate_content(model=model, contents=prompt, config=config)
 
 
 def _explain_empty(response, cfg) -> str:
@@ -321,12 +304,7 @@ def _is_overloaded(exc: Exception) -> bool:
     than a client timeout. Both mean the same thing to a user: try again.
     """
     text = str(exc).upper()
-    return (
-        "503" in text
-        or "504" in text
-        or "UNAVAILABLE" in text
-        or "DEADLINE_EXCEEDED" in text
-    )
+    return "503" in text or "504" in text or "UNAVAILABLE" in text or "DEADLINE_EXCEEDED" in text
 
 
 def _is_throttled(exc: Exception) -> bool:
@@ -397,16 +375,14 @@ def friendly_error(exc: Exception) -> str:
             when = f" It resets in about {hours}h {minutes}m."
 
         return (
-            "This model's daily free-tier quota is used up." + when +
-            " The quota is per model, so switching GEMINI_MODEL to another "
+            "This model's daily free-tier quota is used up."
+            + when
+            + " The quota is per model, so switching GEMINI_MODEL to another "
             "Flash model gives you a fresh allowance today."
         )
 
     if _is_throttled(exc):
-        return (
-            "Rate limit reached on the Gemini free tier. Wait a minute and "
-            "try again."
-        )
+        return "Rate limit reached on the Gemini free tier. Wait a minute and try again."
 
     if _is_missing_model(exc):
         return (

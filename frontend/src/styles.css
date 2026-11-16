@@ -152,6 +152,7 @@ button, input { font: inherit; }
   text-transform: none;
 }
 
+
 .dropzone {
   border: 1.5px dashed var(--line-strong);
   border-radius: var(--radius);
@@ -186,6 +187,8 @@ button, input { font: inherit; }
   color: var(--muted);
   margin: 4px 0 0;
 }
+
+
 .progress {
   height: 3px;
   background: var(--line);
@@ -270,6 +273,7 @@ button, input { font: inherit; }
   color: var(--danger);
 }
 
+
 .doclist {
   list-style: none;
   padding: 0;
@@ -325,6 +329,8 @@ button, input { font: inherit; }
   margin: 18px 0 0;
   line-height: 1.55;
 }
+
+
 .main {
   padding: 34px 40px 80px;
   max-width: 820px;
@@ -403,6 +409,7 @@ button, input { font: inherit; }
 
 .results { margin-top: 38px; }
 
+
 .entry {
   padding-top: 30px;
   margin-top: 30px;
@@ -448,6 +455,8 @@ button, input { font: inherit; }
 }
 
 .answer.error { color: var(--danger); }
+
+
 .caret {
   display: inline-block;
   width: 2px;
@@ -520,6 +529,7 @@ button, input { font: inherit; }
 .markdown li::marker { color: var(--muted); font-variant-numeric: tabular-nums; }
 .markdown li > p { margin-bottom: 8px; }
 
+
 .markdown li > .codeblock { margin-top: 8px; }
 
 .markdown blockquote {
@@ -537,6 +547,7 @@ button, input { font: inherit; }
 
 .markdown a { color: var(--accent-text); text-decoration: underline; }
 
+
 .markdown :not(pre) > code {
   font-family: var(--mono);
   font-size: .87em;
@@ -547,6 +558,7 @@ button, input { font: inherit; }
   color: var(--text);
   word-break: break-word;
 }
+
 
 .codeblock {
   position: relative;
@@ -588,6 +600,8 @@ button, input { font: inherit; }
 
 .codeblock:hover .copy { opacity: 1; }
 .codeblock .copy:hover { color: var(--text); border-color: var(--accent); }
+
+
 .markdown table {
   width: 100%;
   border-collapse: collapse;
@@ -608,6 +622,8 @@ button, input { font: inherit; }
   padding: 7px 10px 7px 0;
   vertical-align: top;
 }
+
+
 .cite {
   display: inline-block;
   font-family: var(--mono);
@@ -621,6 +637,8 @@ button, input { font: inherit; }
   vertical-align: baseline;
   white-space: nowrap;
 }
+
+
 .typing > .markdown > *:last-child::after {
   content: "";
   display: inline-block;
@@ -631,6 +649,7 @@ button, input { font: inherit; }
   margin-left: 2px;
   animation: blink .9s step-end infinite;
 }
+
 
 .sources { margin-top: 20px; }
 
@@ -710,6 +729,7 @@ button, input { font: inherit; }
   padding-top: 10px;
 }
 
+
 .timings {
   display: flex;
   flex-wrap: wrap;
@@ -724,6 +744,7 @@ button, input { font: inherit; }
   color: var(--text-2);
   font-weight: 500;
 }
+
 
 .empty {
   margin-top: 60px;
@@ -740,6 +761,7 @@ button, input { font: inherit; }
 }
 
 .empty p { margin: 0; font-size: 13.5px; }
+
 
 .toast {
   position: fixed;
@@ -813,6 +835,7 @@ button, input { font: inherit; }
     max-width: none;
   }
 }
+
 
 @media (max-width: 860px) {
   .layout { grid-template-columns: 1fr; }

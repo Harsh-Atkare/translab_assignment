@@ -14,6 +14,7 @@ QUERY_SECONDS = Histogram(
     buckets=LATENCY_BUCKETS,
 )
 
+
 STAGE_SECONDS = Histogram(
     "kb_stage_duration_seconds",
     "Time spent in each stage of answering a question",

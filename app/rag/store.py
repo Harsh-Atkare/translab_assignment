@@ -40,7 +40,6 @@ def collection():
             name=cfg.collection,
             metadata={
                 "hnsw:space": "cosine",
-
                 "embed_model": cfg.embed_model,
                 "embed_dim": cfg.embed_dim,
             },
@@ -57,9 +56,14 @@ class EmbeddingMismatch(RuntimeError):
 
 
 def _check_fingerprint(coll, cfg) -> None:
+    """Refuse to serve an index built by a different embedding model.
 
+    Learned this the hard way: swap GEMINI_EMBED_MODEL, keep the old index,
+    and every answer comes back "nothing relevant found" with no error
+    anywhere. Failing loudly on startup is much kinder than that.
+    """
     if coll.count() == 0:
-        return 
+        return
 
     meta = coll.metadata or {}
     was_model = meta.get("embed_model")
@@ -86,9 +90,7 @@ def add(doc_id: str, filename: str, chunks, vectors: list[list[float]]) -> None:
         ids=[f"{doc_id}:{c.index}" for c in chunks],
         embeddings=vectors,
         documents=[c.text for c in chunks],
-        metadatas=[
-            {"doc_id": doc_id, "filename": filename, "page": c.page} for c in chunks
-        ],
+        metadatas=[{"doc_id": doc_id, "filename": filename, "page": c.page} for c in chunks],
     )
 
 
@@ -102,7 +104,6 @@ def search(vector: list[float], top_k: int, doc_id: str | None = None) -> list[d
         include=["documents", "metadatas", "distances"],
     )
 
-
     docs = res["documents"][0]
     metas = res["metadatas"][0]
     dists = res["distances"][0]
@@ -113,7 +114,7 @@ def search(vector: list[float], top_k: int, doc_id: str | None = None) -> list[d
             "page": meta.get("page"),
             "filename": meta.get("filename"),
             "doc_id": meta.get("doc_id"),
-            "score": round(1 - dist, 4), 
+            "score": round(1 - dist, 4),
         }
         for doc, meta, dist in zip(docs, metas, dists, strict=True)
     ]

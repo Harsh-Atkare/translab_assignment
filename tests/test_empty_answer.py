@@ -1,3 +1,11 @@
+"""Regression tests for empty model responses.
+
+gemini-3.8-flash is a thinking model. With max_output_tokens=1024 it spent
+the whole budget on internal reasoning, came back after 35 seconds with
+finish_reason=MAX_TOKENS and no text, and the UI rendered a blank answer
+with nothing in the logs to explain it.
+"""
+
 import pytest
 
 from app.rag import gemini
@@ -21,6 +29,7 @@ class FakeResponse:
 
 @pytest.fixture(autouse=True)
 def stub_gemini():
+    """Override conftest's stub - this file tests gemini.answer itself."""
     yield
 
 
@@ -49,6 +58,7 @@ def test_normal_answer_passes_through(monkeypatch):
 
 
 def test_max_tokens_with_no_text_explains_itself(monkeypatch):
+    """The actual bug. Must not return an empty string."""
     _install(monkeypatch, FakeResponse("", reason="MAX_TOKENS"))
 
     with pytest.raises(RuntimeError) as err:

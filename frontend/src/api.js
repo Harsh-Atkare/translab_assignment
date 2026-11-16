@@ -1,8 +1,7 @@
-
 const TIMEOUTS = {
   default: 30_000,
   ask: 300_000,
-  upload: 600_000, 
+  upload: 600_000,
 };
 
 

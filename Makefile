@@ -10,7 +10,6 @@ help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
-# ---------- local ----------
 
 .PHONY: venv
 venv:  ## Create the virtualenv and install everything (python + node)
@@ -59,15 +58,11 @@ reset:  ## Wipe the vector index (needed after changing the embedding model)
 load:  ## Fire some traffic so the Grafana panels have data
 	./scripts/load.sh
 
-# ---------- docker ----------
 
 .PHONY: build
-build:  ## Build the image
-	docker build -t $(IMAGE):$(TAG) .
+build:  ## Build the image (--pull so base-image security patches land)
+	docker build --pull -t $(IMAGE):$(TAG) .
 
-# Shared preflight. The docker errors for these are long and say nothing
-# useful - "Bind for 0.0.0.0:8000 failed: port is already allocated" is
-# technically accurate and completely unhelpful at 11pm.
 define preflight
 	@docker info > /dev/null 2>&1 || { \
 		echo "Docker is not running. Start Docker Desktop, then try again."; \
@@ -114,7 +109,6 @@ down:  ## Stop the compose stack
 logs:  ## Tail app logs
 	docker compose logs -f app
 
-# ---------- kubernetes ----------
 
 .PHONY: k8s-load
 k8s-load: build  ## Build and push the image into minikube's docker daemon
@@ -144,8 +138,24 @@ k8s-logs:  ## Tail pod logs
 	kubectl -n $(NS) logs -l app=kb-app -f --tail=100
 
 .PHONY: k8s-forward
-k8s-forward:  ## Port-forward the service to localhost:8080
-	kubectl -n $(NS) port-forward svc/kb-app 8080:80
+k8s-forward:  ## Port-forward app, Prometheus and Grafana together
+	@./scripts/k8s-forward.sh
+
+.PHONY: k8s-dashboard
+k8s-dashboard:  ## Load the Grafana dashboard into the cluster
+	@kubectl -n monitoring create configmap kb-dashboard \
+		--from-file=monitoring/dashboards/knowledge-assistant.json \
+		--dry-run=client -o yaml | kubectl apply -f -
+	@kubectl -n monitoring label configmap kb-dashboard grafana_dashboard=1 --overwrite
+	@echo "Loaded. Grafana's sidecar picks it up within ~30s - then refresh."
+
+.PHONY: k8s-urls
+k8s-urls:  ## Print the service URLs
+	@echo "  app         http://localhost:8080"
+	@echo "  prometheus  http://localhost:9090"
+	@echo "  grafana     http://localhost:3000  (admin/admin)"
+	@echo
+	@echo "  Start them with: make k8s-forward"
 
 .PHONY: k8s-reset
 k8s-reset:  ## Wipe the in-cluster index (after an embedding model change)

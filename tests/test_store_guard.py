@@ -16,6 +16,7 @@ def test_mismatched_embedding_model_is_rejected(monkeypatch, sample_pdf):
     from app.rag import store
 
     fresh_dir = tempfile.mkdtemp(prefix="chroma-guard-")
+
     config.get_settings.cache_clear()
     monkeypatch.setenv("CHROMA_DIR", fresh_dir)
     monkeypatch.setenv("GEMINI_EMBED_MODEL", "model-a")
@@ -27,17 +28,20 @@ def test_mismatched_embedding_model_is_rejected(monkeypatch, sample_pdf):
             files={"file": ("doc.pdf", sample_pdf, "application/pdf")},
         )
         assert r.status_code == 201
+
     config.get_settings.cache_clear()
     monkeypatch.setenv("GEMINI_EMBED_MODEL", "model-b")
     store._collection = None
 
     with pytest.raises(store.EmbeddingMismatch, match="model-a"):
         store.count()
+
     config.get_settings.cache_clear()
     store._collection = None
 
 
 def test_empty_index_accepts_any_model(monkeypatch):
+    """A fresh index has no vectors, so there is nothing to clash with."""
     import app.config as config
     from app.rag import store
 

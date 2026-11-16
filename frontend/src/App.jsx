@@ -46,7 +46,7 @@ export default function App() {
       setDocuments(data.documents);
       setTotalChunks(data.total_chunks);
     } catch {
-  
+
     }
   }, []);
 
@@ -61,7 +61,7 @@ export default function App() {
     setBusy(true);
     setQuestion('');
 
-    // Show the question straight away with a pending answer, then fill it in.
+
     setEntries((prev) => [{ question: q, pending: true }, ...prev]);
 
     try {
@@ -77,6 +77,7 @@ export default function App() {
         ...prev.slice(1),
       ]);
     } catch (err) {
+
 
       setError(err.message);
       setEntries((prev) => prev.slice(1));

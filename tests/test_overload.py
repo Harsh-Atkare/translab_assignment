@@ -1,3 +1,15 @@
+"""Handling of Google-side 503s.
+
+Seen in the wild as:
+
+    503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is
+    currently experiencing high demand...', 'status': 'UNAVAILABLE'}}
+
+That is Google's model being saturated, not our quota. The call fails
+immediately - no retrying - and the user sees a sentence rather than a JSON
+dump.
+"""
+
 import pytest
 
 import app.config as config
@@ -62,6 +74,11 @@ def test_overload_is_classified_correctly():
 
 
 def test_504_deadline_is_treated_as_overload():
+    """Google's own backend deadline, not a client timeout.
+
+    It arrives as a ServerError with a JSON body, which a client-side
+    timeout could never produce.
+    """
     assert gemini._is_overloaded(RuntimeError(DEADLINE))
     assert gemini.is_upstream(RuntimeError(DEADLINE))
 
@@ -72,9 +89,7 @@ def test_504_deadline_is_treated_as_overload():
 
 def test_overload_fails_immediately(monkeypatch):
     """No retrying - one attempt, then the error."""
-    calls = _install(
-        monkeypatch, lambda model, n: (_ for _ in ()).throw(RuntimeError(OVERLOAD))
-    )
+    calls = _install(monkeypatch, lambda model, n: (_ for _ in ()).throw(RuntimeError(OVERLOAD)))
 
     with pytest.raises(RuntimeError, match="503"):
         gemini.answer("q?", PASSAGES)
@@ -99,7 +114,7 @@ def test_friendly_error_hides_the_json_blob():
 
     assert "busy" in msg.lower()
     assert "try again" in msg.lower()
-    assert "{" not in msg  # no raw payload
+    assert "{" not in msg
 
 
 def test_friendly_error_distinguishes_rate_limiting():
@@ -108,9 +123,8 @@ def test_friendly_error_distinguishes_rate_limiting():
     assert "free tier" in msg.lower()
 
 
-
-
 def test_upstream_failures_are_classified_for_logging():
+    """These get a one-line log, not a fifty-line traceback."""
     assert gemini.is_upstream(RuntimeError(OVERLOAD))
     assert gemini.is_upstream(RuntimeError("429 RESOURCE_EXHAUSTED"))
     assert gemini.is_upstream(RuntimeError("404 NOT_FOUND"))

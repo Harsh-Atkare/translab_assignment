@@ -1,3 +1,11 @@
+"""Regression tests for embedding batch handling.
+
+gemini-embedding-2 reads a list of strings as one interleaved multimodal
+input and returns a single vector, where gemini-embedding-001 returns one
+per string. Feeding that straight into Chroma failed with
+"Unequal lengths for fields: ids: 49 ... embeddings: 1".
+"""
+
 import pytest
 
 from app.rag import gemini
@@ -37,7 +45,7 @@ def no_sleep(monkeypatch):
 
 
 def _install(monkeypatch, behaviour):
-
+    """Replace the SDK call with a fake and record how it was called."""
     calls = []
 
     class FakeModels:
@@ -53,17 +61,16 @@ def _install(monkeypatch, behaviour):
 
 
 def test_model_that_batches_uses_one_call(monkeypatch):
-    calls = _install(
-        monkeypatch, lambda c: [FakeEmbedding([0.1] * 768) for _ in c]
-    )
+    calls = _install(monkeypatch, lambda c: [FakeEmbedding([0.1] * 768) for _ in c])
 
     vectors = gemini.embed([f"chunk {i}" for i in range(49)])
 
     assert len(vectors) == 49
-    assert len(calls) == 1  # one batched request, not 49
+    assert len(calls) == 1
 
 
 def test_model_that_coalesces_falls_back_per_chunk(monkeypatch):
+    """The actual bug: 49 inputs in, 1 vector out."""
     calls = _install(monkeypatch, lambda c: [FakeEmbedding([0.2] * 768)])
 
     vectors = gemini.embed([f"chunk {i}" for i in range(49)])
@@ -91,6 +98,7 @@ def test_empty_input_makes_no_api_call(monkeypatch):
 
 
 def test_unexpected_count_raises_rather_than_corrupting_the_index(monkeypatch):
+
     _install(monkeypatch, lambda c: [FakeEmbedding([0.4] * 768)] * 2)
 
     with pytest.raises(RuntimeError, match="vectors for"):

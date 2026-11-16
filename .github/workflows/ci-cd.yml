@@ -46,8 +46,6 @@ jobs:
 
       - name: Run tests
         env:
-          # A dummy key is enough - the suite stubs out every Gemini call,
-          # so nothing here touches the network or burns free-tier quota.
           GEMINI_API_KEY: test-key
         run: pytest --cov=app --cov-report=term-missing
 
@@ -66,8 +64,6 @@ jobs:
 
       - name: Check manifests against the Kubernetes schema
         run: |
-          # ServiceMonitor is a CRD from kube-prometheus-stack, so the schema
-          # isn't in the standard set - skip it rather than fail the build.
           kubeconform -strict -summary \
             -skip ServiceMonitor \
             -ignore-missing-schemas \
@@ -77,7 +73,6 @@ jobs:
     name: Build and push image
     runs-on: ubuntu-latest
     needs: [test, validate-manifests]
-    # Don't publish images for pull requests - only for merged code.
     if: github.event_name == 'push'
 
     permissions:
@@ -94,7 +89,6 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          # GITHUB_TOKEN is injected automatically - no secret to configure.
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Work out image tags
@@ -126,33 +120,52 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
 
   deploy:
-    name: Deploy
-    runs-on: ubuntu-latest
-    needs: build
+    name: Deploy to minikube
+    runs-on: self-hosted
+    needs: [test, validate-manifests]
     if: github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v4
 
-      # There is no cloud cluster behind this job - the demo runs on minikube
-      # on a laptop, which GitHub's runners cannot reach. The step below prints
-      # the exact commands a real deploy would run. To make it live, add a
-      # KUBE_CONFIG secret and swap the echo for the kubectl calls.
-      - name: Deploy to Kubernetes (dry run)
+      - name: Check the cluster is up
         run: |
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-          echo "Would run:"
-          echo "  kubectl -n knowledge-assistant set image deployment/kb-app app=$IMAGE"
-          echo "  kubectl -n knowledge-assistant rollout status deployment/kb-app --timeout=180s"
+          minikube status || { echo "minikube is not running - start it and re-run"; exit 1; }
+          kubectl -n knowledge-assistant get deployment kb-app
 
-      # - name: Configure kubectl
-      #   uses: azure/k8s-set-context@v4
-      #   with:
-      #     method: kubeconfig
-      #     kubeconfig: ${{ secrets.KUBE_CONFIG }}
-      #
-      # - name: Roll out
-      #   run: |
-      #     kubectl -n knowledge-assistant set image deployment/kb-app \
-      #       app=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-      #     kubectl -n knowledge-assistant rollout status deployment/kb-app --timeout=180s
+      - name: Build into minikube's Docker daemon
+        run: |
+          eval $(minikube docker-env)
+          docker build -t translab-assignment:${{ github.sha }} .
+          docker images | grep translab | head -3
+
+      - name: Roll out the new image
+        run: |
+          kubectl -n knowledge-assistant set image deployment/kb-app \
+            app=translab-assignment:${{ github.sha }}
+          kubectl -n knowledge-assistant rollout status deployment/kb-app --timeout=300s
+
+      - name: Verify it answers
+        run: |
+          kubectl -n knowledge-assistant wait --for=condition=ready pod \
+            -l app=kb-app --timeout=120s
+
+          kubectl -n knowledge-assistant port-forward svc/kb-app 18080:80 &
+          FORWARD=$!
+          sleep 5
+
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:18080/healthz)
+          kill $FORWARD 2>/dev/null || true
+
+          [ "$code" = "200" ] || { echo "health check returned $code"; exit 1; }
+          echo "Deployed and healthy: translab-assignment:${{ github.sha }}"
+
+      - name: Summary
+        run: |
+          {
+            echo "### Deployed to minikube"
+            echo ""
+            echo "Image: \`translab-assignment:${{ github.sha }}\`"
+            echo ""
+            kubectl -n knowledge-assistant get pods -l app=kb-app
+          } >> $GITHUB_STEP_SUMMARY

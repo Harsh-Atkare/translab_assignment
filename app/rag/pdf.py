@@ -29,10 +29,8 @@ def extract_pages(pdf_bytes: bytes) -> list[tuple[int, str]]:
                 pages.append((page_no, clean(text)))
 
     if not pages:
-
         raise ValueError(
-            "No selectable text found in this PDF. "
-            "It is probably a scan - try a text-based PDF."
+            "No selectable text found in this PDF. It is probably a scan - try a text-based PDF."
         )
 
     return pages
@@ -51,7 +49,11 @@ def chunk_pages(
     chunk_size: int = 1200,
     overlap: int = 200,
 ) -> list[Chunk]:
+    """Split each page into overlapping windows, preferring paragraph breaks.
 
+    Deliberately not using a token-based splitter - it needs a tokenizer
+    dependency and char counts are close enough at this scale.
+    """
     chunks: list[Chunk] = []
     idx = 0
 
@@ -62,7 +64,6 @@ def chunk_pages(
             end = min(start + chunk_size, len(text))
 
             if end < len(text):
-
                 window = text[start:end]
                 for marker in ("\n\n", ". ", "\n"):
                     cut = window.rfind(marker)
@@ -71,7 +72,7 @@ def chunk_pages(
                         break
 
             body = text[start:end].strip()
-            if len(body) > 50: 
+            if len(body) > 50:
                 chunks.append(Chunk(text=body, page=page_no, index=idx))
                 idx += 1
 

@@ -1,3 +1,12 @@
+"""Print the Gemini models your API key can use.
+
+Google retires and renames models fairly often, so if the app starts throwing
+404s on generate_content, run this first and update GEMINI_MODEL in .env to
+something from the list.
+
+    python scripts/list_models.py
+"""
+
 import os
 import sys
 
@@ -37,4 +46,3 @@ if other:
     print(f"\n{len(other)} other models not usable for text Q&A")
 
 print("\nPrefer a Flash model - the Pro models are mostly paid-tier only.\n")
-
