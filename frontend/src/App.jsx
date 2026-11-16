@@ -95,7 +95,7 @@ export default function App() {
         <div className="brand">
           <h1>Knowledge Assistant</h1>
           <span className="rule" />
-          <span className="kicker">Ask your documents</span>
+          <span className="kicker">Ask your documents - by Harsh Atkare</span>
         </div>
 
         <button
